@@ -15,20 +15,13 @@ import string
 load_dotenv()
 
 app = Flask(__name__, static_folder='static')
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 
 # PostgreSQL Configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-    'DATABASE_URL',
-    # 'postgresql://postgres:password@localhost:5432/pharmacy_db'
-)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'xlsx', 'xls'}
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-
-# Create upload folder if it doesn't exist
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Initialize extensions
 db.init_app(app)
@@ -283,14 +276,10 @@ def bulk_upload():
             flash('No file selected', 'danger')
             return redirect(request.url)
         
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-            
+        if file and allowed_file(file.filename):        
             try:
                 # Read Excel file
-                df = pd.read_excel(filepath)
+                df = pd.read_excel(file)
                 
                 # Required columns
                 required_columns = ['name', 'cost_price']
@@ -298,7 +287,6 @@ def bulk_upload():
                 
                 if missing_columns:
                     flash(f'Missing required columns: {", ".join(missing_columns)}', 'danger')
-                    os.remove(filepath)
                     return redirect(request.url)
                 
                 success_count = 0
@@ -422,9 +410,6 @@ def bulk_upload():
                 
                 db.session.commit()
                 
-                # Clean up uploaded file
-                os.remove(filepath)
-                
                 # Display results
                 if success_count > 0:
                     flash(f'Successfully processed {success_count} products!', 'success')
@@ -437,8 +422,6 @@ def bulk_upload():
                 
             except Exception as e:
                 db.session.rollback()
-                if os.path.exists(filepath):
-                    os.remove(filepath)
                 flash(f'Error processing file: {str(e)}', 'danger')
                 return redirect(request.url)
         else:
@@ -704,21 +687,3 @@ def api_low_stock():
         'quantity': p.quantity,
         'reorder_level': p.reorder_level
     } for p in products])
-
-# Initialize database
-# def init_database():
-#     with app.app_context():
-#         db.create_all()
-
-#         if not User.query.filter_by(username='admin').first():
-#             hashed_password = bcrypt.generate_password_hash('admin123').decode('utf-8')
-#             admin = User(
-#                 username='admin',
-#                 email='admin@example.com',
-#                 password=hashed_password,
-#                 role='admin'
-#             )
-#             db.session.add(admin)
-#             db.session.commit()
-
-    # init_database()
