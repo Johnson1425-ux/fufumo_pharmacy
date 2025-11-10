@@ -8,11 +8,20 @@
   ],
   "routes": [
     {
+      "src": "/(static/.*)",
+      "dest": "/static/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "app.py"
     }
   ],
   "env": {
-    "PYTHONUNBUFFERED": "1"
+    "FLASK_ENV": "production"
+  },
+  "functions": {
+    "app.py": {
+      "maxDuration": 10
+    }
   }
 }
