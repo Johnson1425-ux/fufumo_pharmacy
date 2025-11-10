@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Transactions - Inventory Management{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <h2 class="mb-4">Transaction History</h2>
+    
+    <div class="card">
+        <div class="card-body">
+            {% if transactions.items %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Product</th>
+                                <th>Type</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Total</th>
+                                <th>Reference</th>
+                                <th>Created By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trans in transactions.items %}
+                            <tr>
+                                <td>{{ trans.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>{{ trans.product.name }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if trans.transaction_type == 'in' else 'info' }}">
+                                        {{ trans.transaction_type|upper }}
+                                    </span>
+                                </td>
+                                <td>{{ trans.quantity }}</td>
+                                <td>Tsh{{ "%.2f"|format(trans.unit_price or 0) }}</td>
+                                <td>Tsh{{ "%.2f"|format(trans.total_price or 0) }}</td>
+                                <td>{{ trans.reference or '-' }}</td>
+                                <td>{{ trans.created_by or 'System' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if transactions.pages > 1 %}
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if transactions.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ transactions.prev_num }}">Previous</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page in transactions.iter_pages() %}
+                            {% if page %}
+                                <li class="page-item {% if page == transactions.page %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ page }}">{{ page }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if transactions.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ transactions.next_num }}">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <p class="text-center text-muted my-5">No transactions found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

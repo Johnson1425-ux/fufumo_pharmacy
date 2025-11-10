@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Inventory Management{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <h2 class="mb-4">Reports & Analytics</h2>
+    
+    <!-- Date Range Selector -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="{{ url_for('reports') }}" class="row align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Time Period</label>
+                    <select name="days" class="form-select" onchange="this.form.submit()">
+                        <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 days</option>
+                        <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 days</option>
+                        <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 days</option>
+                        <option value="365" {% if days == 365 %}selected{% endif %}>Last year</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-arrow-down-circle"></i> Stock Movement Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h3 class="text-success">{{ stock_in }}</h3>
+                            <p class="text-muted">Units In</p>
+                        </div>
+                        <div class="col-6">
+                            <h3 class="text-info">{{ stock_out }}</h3>
+                            <p class="text-muted">Units Out</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> Inventory Metrics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h3>{{ stock_in - stock_out }}</h3>
+                            <p class="text-muted">Net Change</p>
+                        </div>
+                        <div class="col-6">
+                            <h3>{{ low_stock|length }}</h3>
+                            <p class="text-muted">Low Stock Items</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Top Products -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-trophy"></i> Top Moving Products</h5>
+                </div>
+                <div class="card-body">
+                    {% if top_products %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Units Sold</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product, sold in top_products %}
+                                    <tr>
+                                        <td>{{ product }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="me-2">{{ sold }}</span>
+                                                <div class="progress flex-grow-1" style="height: 10px;">
+                                                    <div class="progress-bar" style="width: {{ (sold / top_products[0][1] * 100) if top_products[0][1] > 0 else 0 }}%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">No sales data available for this period</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Category Distribution -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Category Distribution</h5>
+                </div>
+                <div class="card-body">
+                    {% if category_stats %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Products</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cat, count, value in category_stats %}
+                                    <tr>
+                                        <td>{{ cat or 'Uncategorized' }}</td>
+                                        <td><span class="badge bg-secondary">{{ count }}</span></td>
+                                        <td>Tsh{{ "%.2f"|format(value or 0) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">No category data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Low Stock Alert -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Items Requiring Reorder</h5>
+                </div>
+                <div class="card-body">
+                    {% if low_stock %}
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>SKU</th>
+                                        <th>Product</th>
+                                        <th>Current Stock</th>
+                                        <th>Reorder Level</th>
+                                        <th>Suggested Order</th>
+                                        <th>Supplier</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in low_stock %}
+                                    <tr>
+                                        <td>{{ item.sku }}</td>
+                                        <td>{{ item.name }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'danger' if item.quantity == 0 else 'warning' }}">
+                                                {{ item.quantity }}
+                                            </span>
+                                        </td>
+                                        <td>{{ item.reorder_level }}</td>
+                                        <td>{{ item.reorder_quantity }}</td>
+                                        <td>{{ item.supplier or '-' }}</td>
+                                        <td>
+                                            <a href="{{ url_for('stock_in', product_id=item.id) }}" 
+                                               class="btn btn-sm btn-success">
+                                                <i class="bi bi-plus-circle"></i> Restock
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">All items are adequately stocked</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

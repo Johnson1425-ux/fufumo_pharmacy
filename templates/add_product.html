@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Add Product - Inventory Management{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Bulk Upload Notice -->
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="bi bi-info-circle"></i> <strong>Need to add multiple products?</strong> 
+                Use our <a href="{{ url_for('bulk_upload') }}" class="alert-link">Bulk Upload</a> feature to import products from Excel.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Add New Product</h4>
+                    <a href="{{ url_for('bulk_upload') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-upload"></i> Bulk Upload
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('add_product') }}">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="sku" class="form-label">SKU</label>
+                                <input type="text" class="form-control" id="sku" name="sku"
+                                       placeholder="Leave empty to auto-generate">
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="auto_generate_sku" 
+                                           name="auto_generate_sku" onchange="toggleSKUField(this)">
+                                    <label class="form-check-label" for="auto_generate_sku">
+                                        <small>Auto-generate SKU</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">Product Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" required 
+                                       placeholder="e.g., Wireless Mouse">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" 
+                                      placeholder="Product description..."></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label">Category</label>
+                                <input type="text" class="form-control" id="category" name="category" 
+                                       placeholder="e.g., Electronics" list="categories">
+                                <datalist id="categories">
+                                    <option value="Electronics">
+                                    <option value="Furniture">
+                                    <option value="Office Supplies">
+                                    <option value="Accessories">
+                                </datalist>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="supplier" class="form-label">Supplier</label>
+                                <select class="form-select" id="supplier" name="supplier">
+                                    <option value="">Select Supplier</option>
+                                    {% for supplier in suppliers %}
+                                        <option value="{{ supplier.name }}">{{ supplier.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="unit_price" class="form-label">Unit Price (Tsh) <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" class="form-control" id="unit_price" name="unit_price" 
+                                       required min="0" placeholder="0.00">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="cost_price" class="form-label">Cost Price (Tsh) <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" class="form-control" id="cost_price" name="cost_price" 
+                                       required min="0" placeholder="0.00">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="quantity" class="form-label">Initial Quantity</label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" 
+                                       min="0" value="0">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="location" class="form-label">Location</label>
+                                <input type="text" class="form-control" id="location" name="location" 
+                                       placeholder="e.g., Warehouse A">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="reorder_level" class="form-label">Reorder Level</label>
+                                <input type="number" class="form-control" id="reorder_level" name="reorder_level" 
+                                       min="0" value="10" 
+                                       title="Alert will be triggered when stock falls below this level">
+                                <small class="text-muted">Alert when stock falls below this level</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="reorder_quantity" class="form-label">Reorder Quantity</label>
+                                <input type="number" class="form-control" id="reorder_quantity" name="reorder_quantity" 
+                                       min="0" value="50"
+                                       title="Suggested quantity to order when restocking">
+                                <small class="text-muted">Suggested quantity to order</small>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('products') }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Add Product
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleSKUField(checkbox) {
+    const skuInput = document.getElementById('sku');
+    if (checkbox.checked) {
+        skuInput.disabled = true;
+        skuInput.value = '';
+        skuInput.placeholder = 'Will be auto-generated';
+    } else {
+        skuInput.disabled = false;
+        skuInput.placeholder = 'Leave empty to auto-generate';
+    }
+}
+</script>
+{% endblock %}

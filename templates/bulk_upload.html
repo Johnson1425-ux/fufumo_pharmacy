@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Upload - Inventory Management{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="bi bi-upload"></i> Bulk Upload Products</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Instructions -->
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading"><i class="bi bi-info-circle"></i> Instructions</h5>
+                        <ul class="mb-0">
+                            <li>Download the template Excel file below to see the required format</li>
+                            <li>Fill in your product data following the template structure</li>
+                            <li><strong>SKU is optional</strong> - if left empty, a unique SKU will be auto-generated (e.g., PROD123456)</li>
+                            <li>Upload the completed Excel file (.xlsx or .xls)</li>
+                            <li>Existing products (matching SKU) will be updated; new ones will be created</li>
+                            <li>Maximum file size: 16MB</li>
+                        </ul>
+                    </div>
+
+                    <!-- Template Download -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5><i class="bi bi-download"></i> Download Template</h5>
+                            <p class="text-muted">Use this template to structure your product data correctly.</p>
+                            <a href="{{ url_for('download_template') }}" class="btn btn-success">
+                                <i class="bi bi-file-earmark-excel"></i> Download Excel Template
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Required Columns Info -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5><i class="bi bi-list-check"></i> Column Reference</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Column Name</th>
+                                            <th>Required</th>
+                                            <th>Type</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><code>sku</code></td>
+                                            <td><span class="badge bg-secondary">Optional</span></td>
+                                            <td>Text</td>
+                                            <td>Unique product identifier (auto-generated if empty)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>name</code></td>
+                                            <td><span class="badge bg-danger">Required</span></td>
+                                            <td>Text</td>
+                                            <td>Product name</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>unit_price</code></td>
+                                            <td><span class="badge bg-danger">Required</span></td>
+                                            <td>Number</td>
+                                            <td>Selling price in Tsh</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>cost_price</code></td>
+                                            <td><span class="badge bg-danger">Required</span></td>
+                                            <td>Number</td>
+                                            <td>Cost price in Tsh</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>description</code></td>
+                                            <td><span class="badge bg-secondary">Optional</span></td>
+                                            <td>Text</td>
+                                            <td>Product description</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>category</code></td>
+                                            <td><span class="badge bg-secondary">Optional</span></td>
+                                            <td>Text</td>
+                                            <td>Product category</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>quantity</code></td>
+                                            <td><span class="badge bg-secondary">Optional</span></td>
+                                            <td>Number</td>
+                                            <td>Current stock quantity (default: 0)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>reorder_level</code></td>
+                                            <td><span class="badge bg-secondary">Optional</span></td>
+                                            <td>Number</td>
+                                            <td>Minimum stock level for alerts (default: 10)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>reorder_quantity</code></td>
+                                            <td><span class="badge bg-secondary">Optional</span></td>
+                                            <td>Number</td>
+                                            <td>Suggested reorder amount (default: 50)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>supplier</code></td>
+                                            <td><span class="badge bg-secondary">Optional</span></td>
+                                            <td>Text</td>
+                                            <td>Supplier name</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>location</code></td>
+                                            <td><span class="badge bg-secondary">Optional</span></td>
+                                            <td>Text</td>
+                                            <td>Storage location</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upload Form -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h5><i class="bi bi-cloud-upload"></i> Upload File</h5>
+                            <form method="POST" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="file" class="form-label">Select Excel File</label>
+                                    <input type="file" class="form-control" id="file" name="file" 
+                                           accept=".xlsx,.xls" required>
+                                    <div class="form-text">Accepted formats: .xlsx, .xls (Max 16MB)</div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('products') }}" class="btn btn-secondary">
+                                        <i class="bi bi-arrow-left"></i> Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-upload"></i> Upload & Process
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Tips -->
+                    <div class="alert alert-warning mt-4">
+                        <h6><i class="bi bi-lightbulb"></i> Tips for Success</h6>
+                        <ul class="mb-0 small">
+                            <li><strong>Auto-Generated SKUs:</strong> Leave the SKU column empty to auto-generate unique codes (format: PROD######).</li>
+                            <li><strong>Unique SKUs:</strong> If providing SKUs manually, each must be unique. Duplicate SKUs will update existing products.</li>
+                            <li><strong>Data Validation:</strong> Ensure numeric fields contain only numbers (no currency symbols or text).</li>
+                            <li><strong>Empty Cells:</strong> Leave optional cells empty if not applicable.</li>
+                            <li><strong>Backup:</strong> Consider backing up your current inventory before bulk updates.</li>
+                            <li><strong>Test First:</strong> Try uploading a small file with a few products first to test the process.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

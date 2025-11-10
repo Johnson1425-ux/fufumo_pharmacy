@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Products - Inventory Management{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Products</h2>
+        <a href="{{ url_for('add_product') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add Product
+        </a>
+    </div>
+    
+    <!-- Search and Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="{{ url_for('products') }}">
+                <div class="row">
+                    <div class="col-md-6">
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="Search by name, SKU, or description..."
+                               value="{{ request.args.get('search', '') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <select name="category" class="form-select">
+                            <option value="">All Categories</option>
+                            {% for cat in categories %}
+                                <option value="{{ cat }}" {% if request.args.get('category') == cat %}selected{% endif %}>
+                                    {{ cat }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Products Table -->
+    <div class="card">
+        <div class="card-body">
+            {% if products %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Stock</th>
+                                <th>Unit Price</th>
+                                <th>Cost</th>
+                                <th>Value</th>
+                                <th>Location</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td>{{ product.sku }}</td>
+                                <td>
+                                    <strong>{{ product.name }}</strong>
+                                    {% if product.description %}
+                                        <br><small class="text-muted">{{ product.description[:50] }}...</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if product.category %}
+                                        <span class="badge bg-secondary">{{ product.category }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if product.quantity <= product.reorder_level %}
+                                        <span class="badge bg-danger">{{ product.quantity }}</span>
+                                        <i class="bi bi-exclamation-triangle text-danger"></i>
+                                    {% elif product.quantity <= product.reorder_level * 2 %}
+                                        <span class="badge bg-warning">{{ product.quantity }}</span>
+                                    {% else %}
+                                        <span class="badge bg-success">{{ product.quantity }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>Tsh{{ "%.2f"|format(product.unit_price) }}</td>
+                                <td>Tsh{{ "%.2f"|format(product.cost_price) }}</td>
+                                <td>Tsh{{ "%.2f"|format(product.quantity * product.unit_price) }}</td>
+                                <td>{{ product.location or '-' }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{{ url_for('stock_in', product_id=product.id) }}" 
+                                           class="btn btn-outline-success" title="Stock In">
+                                            <i class="bi bi-plus"></i>
+                                        </a>
+                                        <a href="{{ url_for('stock_out', product_id=product.id) }}" 
+                                           class="btn btn-outline-info" title="Stock Out">
+                                            <i class="bi bi-dash"></i>
+                                        </a>
+                                        <a href="{{ url_for('edit_product', id=product.id) }}" 
+                                           class="btn btn-outline-warning" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger" 
+                                                onclick="confirmDelete({{ product.id }}, '{{ product.name }}')"
+                                                title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center text-muted my-5">
+                    No products found. <a href="{{ url_for('add_product') }}">Add your first product</a>
+                </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete <strong id="deleteProductName"></strong>?
+                This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(productId, productName) {
+    document.getElementById('deleteProductName').textContent = productName;
+    document.getElementById('deleteForm').action = `/product/${productId}/delete`;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

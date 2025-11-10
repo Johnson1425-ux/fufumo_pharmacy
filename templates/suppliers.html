@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Suppliers - Inventory Management{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Suppliers</h2>
+        <a href="{{ url_for('add_supplier') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add Supplier
+        </a>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            {% if suppliers %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Contact Person</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Address</th>
+                                <th>Added On</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for supplier in suppliers %}
+                            <tr>
+                                <td><strong>{{ supplier.name }}</strong></td>
+                                <td>{{ supplier.contact_person or '-' }}</td>
+                                <td>
+                                    {% if supplier.email %}
+                                        <a href="mailto:{{ supplier.email }}">{{ supplier.email }}</a>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>{{ supplier.phone or '-' }}</td>
+                                <td>{{ supplier.address or '-' }}</td>
+                                <td>{{ supplier.created_at.strftime('%Y-%m-%d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center text-muted my-5">
+                    No suppliers found. <a href="{{ url_for('add_supplier') }}">Add your first supplier</a>
+                </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

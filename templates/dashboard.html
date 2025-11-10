@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Inventory Management{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <h2 class="mb-4">Dashboard</h2>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Products</h6>
+                            <h3 class="mb-0">{{ total_products }}</h3>
+                        </div>
+                        <i class="bi bi-box text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stat-card success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Inventory Value</h6>
+                            <h3 class="mb-0">Tsh{{ "%.2f"|format(total_value) }}</h3>
+                        </div>
+                        <i class="bi bi-currency-dollar text-success" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stat-card warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Cost</h6>
+                            <h3 class="mb-0">Tsh{{ "%.2f"|format(total_cost) }}</h3>
+                        </div>
+                        <i class="bi bi-cash-stack text-warning" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stat-card danger">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Low Stock Items</h6>
+                            <h3 class="mb-0">
+                                {{ low_stock_products }}
+                                {% if low_stock_products > 0 %}
+                                    <span class="badge bg-danger alert-badge ms-2">!</span>
+                                {% endif %}
+                            </h3>
+                        </div>
+                        <i class="bi bi-exclamation-triangle text-danger" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Low Stock Alerts -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Low Stock Alerts</h5>
+                </div>
+                <div class="card-body">
+                    {% if low_stock_items %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Current Stock</th>
+                                        <th>Reorder Level</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in low_stock_items[:5] %}
+                                    <tr>
+                                        <td>{{ item.name }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'danger' if item.quantity == 0 else 'warning' }}">
+                                                {{ item.quantity }}
+                                            </span>
+                                        </td>
+                                        <td>{{ item.reorder_level }}</td>
+                                        <td>
+                                            <a href="{{ url_for('stock_in', product_id=item.id) }}" 
+                                               class="btn btn-sm btn-success">
+                                                <i class="bi bi-plus-circle"></i> Restock
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if low_stock_items|length > 5 %}
+                            <div class="text-center mt-2">
+                                <a href="{{ url_for('products') }}?low_stock=true" class="text-muted">
+                                    View all {{ low_stock_items|length }} low stock items
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted text-center my-3">No low stock alerts</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Transactions -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Transactions</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_transactions %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Type</th>
+                                        <th>Quantity</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for trans in recent_transactions[:5] %}
+                                    <tr>
+                                        <td>{{ trans.product.name }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if trans.transaction_type == 'in' else 'info' }}">
+                                                {{ trans.transaction_type|upper }}
+                                            </span>
+                                        </td>
+                                        <td>{{ trans.quantity }}</td>
+                                        <td>{{ trans.created_at.strftime('%m/%d %H:%M') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-center mt-2">
+                            <a href="{{ url_for('transactions') }}" class="text-muted">View all transactions</a>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center my-3">No recent transactions</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{{ url_for('add_product') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Add New Product
+                        </a>
+                        <a href="{{ url_for('products') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-box"></i> View All Products
+                        </a>
+                        <a href="{{ url_for('add_supplier') }}" class="btn btn-outline-success">
+                            <i class="bi bi-truck"></i> Add Supplier
+                        </a>
+                        <a href="{{ url_for('reports') }}" class="btn btn-outline-info">
+                            <i class="bi bi-graph-up"></i> View Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
