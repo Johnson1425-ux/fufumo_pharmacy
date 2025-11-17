@@ -51,6 +51,13 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # Routes
+@app.route('/')
+def index():
+    """Root route - redirect to dashboard if logged in, otherwise to login"""
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('login'))
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -676,6 +683,7 @@ def api_product(id):
     })
 
 @app.route('/api/low-stock')
+@login_required
 def api_low_stock():
     products = Product.query.filter(
         Product.quantity <= Product.reorder_level
@@ -687,3 +695,8 @@ def api_low_stock():
         'quantity': p.quantity,
         'reorder_level': p.reorder_level
     } for p in products])
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
