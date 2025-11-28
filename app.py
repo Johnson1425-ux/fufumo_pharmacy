@@ -695,8 +695,3 @@ def api_low_stock():
         'quantity': p.quantity,
         'reorder_level': p.reorder_level
     } for p in products])
-
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
