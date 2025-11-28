@@ -1,3 +1,11 @@
-.env
-.vercel/
 __pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+.vercel/
+uploads/*.xlsx
+uploads/*.xls
+!uploads/.gitkeep
+*.log
+.DS_Store
