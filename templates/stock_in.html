@@ -48,7 +48,7 @@
                         <div class="mb-3">
                             <label for="created_by" class="form-label">Received By</label>
                             <input type="text" class="form-control" id="created_by" name="created_by" 
-                                   placeholder="Your name">
+                                   value="{{ current_user.username }}" placeholder="Your name">
                         </div>
                         
                         <div class="d-flex justify-content-between">
