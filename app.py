@@ -517,6 +517,51 @@ def bulk_upload():
     
     return render_template('bulk_upload.html')
 
+
+@app.route('/product/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_product(id):
+    product = Product.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        product.sku = request.form['sku']
+        product.name = request.form['name']
+        product.description = request.form.get('description')
+        product.category = request.form.get('category')
+        product.unit_price = float(request.form['unit_price'])
+        product.cost_price = float(request.form['cost_price'])
+        product.reorder_level = int(request.form.get('reorder_level', 10))
+        product.reorder_quantity = int(request.form.get('reorder_quantity', 50))
+        product.supplier = request.form.get('supplier')
+        product.location = request.form.get('location')
+        product.updated_at = datetime.now(timezone.utc)
+        
+        try:
+            db.session.commit()
+            flash('Product updated successfully!', 'success')
+            return redirect(url_for('products'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating product: {str(e)}', 'error')
+    
+    suppliers = Supplier.query.order_by(Supplier.name).all()
+    return render_template('edit_product.html', product=product, suppliers=suppliers)
+
+@app.route('/product/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_product(id):
+    product = Product.query.get_or_404(id)
+    
+    try:
+        db.session.delete(product)
+        db.session.commit()
+        flash('Product deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting product: {str(e)}', 'error')
+    
+    return redirect(url_for('products'))
+
 # ... (rest of your routes remain the same, just add created_by=current_user.username to transactions)
 
 @app.route('/stock/in/<int:product_id>', methods=['GET', 'POST'])
