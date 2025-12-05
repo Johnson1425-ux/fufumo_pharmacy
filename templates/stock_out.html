@@ -67,4 +67,196 @@
         </div>
     </div>
 </div>
+
+<!-- Receipt Modal -->
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="receiptModalLabel">
+                    <i class="bi bi-receipt"></i> Sales Receipt
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="receiptContent">
+                {% if receipt_data %}
+                <div class="receipt-container p-4">
+                    <!-- Company Header -->
+                    <div class="text-center mb-4">
+                        <h3 class="fw-bold">SALES RECEIPT</h3>
+                        <p class="text-muted mb-0">Receipt #{{ receipt_data.transaction_id }}</p>
+                        <p class="text-muted">{{ receipt_data.transaction_date }}</p>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Transaction Details -->
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <p class="mb-1"><strong>Served By:</strong></p>
+                            <p>{{ receipt_data.created_by }}</p>
+                        </div>
+                        {% if receipt_data.reference %}
+                        <div class="col-6 text-end">
+                            <p class="mb-1"><strong>Invoice #:</strong></p>
+                            <p>{{ receipt_data.reference }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Product Details -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">Purchase Details</h5>
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Qty</th>
+                                    <th>Unit Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ receipt_data.product_name }}</td>
+                                    <td>{{ receipt_data.quantity }}</td>
+                                    <td>Tsh{{ "%.2f"|format(receipt_data.unit_price) }}</td>
+                                    <td><strong>Tsh{{ "%.2f"|format(receipt_data.total_price) }}</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Summary -->
+                    <div class="bg-light p-3 rounded mb-3">
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <p class="mb-1"><strong>Total Amount:</strong></p>
+                                <h3 class="text-info mb-0">Tsh{{ "%.2f"|format(receipt_data.total_price) }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if receipt_data.notes %}
+                    <div class="mb-3">
+                        <p class="mb-1"><strong>Notes:</strong></p>
+                        <p class="text-muted">{{ receipt_data.notes }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <div class="text-center text-muted">
+                        <small>This is a computer-generated receipt.</small>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Close
+                </button>
+                <button type="button" class="btn btn-primary" onclick="printReceipt()">
+                    <i class="bi bi-printer"></i> Print
+                </button>
+                <button type="button" class="btn btn-success" onclick="downloadReceipt()">
+                    <i class="bi bi-download"></i> Download PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if show_receipt %}
+<script>
+    // Show the modal automatically when receipt data is available
+    document.addEventListener('DOMContentLoaded', function() {
+        var receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
+        receiptModal.show();
+        
+        // Redirect to products page when modal is closed
+        document.getElementById('receiptModal').addEventListener('hidden.bs.modal', function () {
+            window.location.href = "{{ url_for('products') }}";
+        });
+    });
+</script>
+{% endif %}
+
+<script>
+    function printReceipt() {
+        // Get the receipt content
+        var receiptContent = document.getElementById('receiptContent').innerHTML;
+        
+        // Open new window for printing
+        var printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Receipt - Transaction #{{ receipt_data.transaction_id if receipt_data else '' }}</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+                <style>
+                    @media print {
+                        .modal-footer { display: none; }
+                        body { padding: 20px; }
+                    }
+                </style>
+            </head>
+            <body>
+                ${receiptContent}
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        // Uncomment to auto-close after printing
+                        // window.onafterprint = function() { window.close(); }
+                    }
+                <\/script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    }
+    
+    function downloadReceipt() {
+        // Create a temporary element with the receipt content
+        var receiptContent = document.getElementById('receiptContent').cloneNode(true);
+        
+        // For a simple solution, we'll create an HTML file
+        // For a real PDF, you'd need a library like jsPDF or server-side generation
+        var htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Receipt</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+                <style>
+                    body { padding: 20px; font-family: Arial, sans-serif; }
+                </style>
+            </head>
+            <body>
+                ${receiptContent.innerHTML}
+            </body>
+            </html>
+        `;
+        
+        // Create a Blob and download it
+        var blob = new Blob([htmlContent], { type: 'text/html' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'receipt_{{ receipt_data.transaction_id if receipt_data else "transaction" }}.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        // Show success message
+        alert('Receipt downloaded successfully!');
+    }
+</script>
+
 {% endblock %}
