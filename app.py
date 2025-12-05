@@ -612,6 +612,9 @@ def stock_out(product_id):
                 return render_template('stock_out.html', product=product)
             
             unit_price = float(request.form.get('unit_price', product.unit_price))
+            reference = request.form.get('reference', '')
+            notes = request.form.get('notes', '')
+            created_by = request.form.get('created_by', current_user.username)
             
             product.quantity -= quantity
             product.updated_at = datetime.now(timezone.utc)
@@ -622,24 +625,44 @@ def stock_out(product_id):
                 quantity=quantity,
                 unit_price=unit_price,
                 total_price=quantity * unit_price,
-                reference=request.form.get('reference', ''),
-                notes=request.form.get('notes', ''),
-                created_by=current_user.username
+                reference=reference,
+                notes=notes,
+                created_by=created_by
             )
             
             db.session.add(transaction)
             db.session.commit()
-            flash(f'Successfully removed {quantity} units of {product.name}', 'success')
             
-            if product.quantity <= product.reorder_level:
-                flash(f'Warning: {product.name} is low on stock ({product.quantity} remaining)', 'warning')
+            # Check for low stock warning
+            low_stock_warning = product.quantity <= product.reorder_level
             
-            return redirect(url_for('products'))
+            # Prepare receipt data
+            receipt_data = {
+                'transaction_id': transaction.id,
+                'transaction_date': transaction.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'product_name': product.name,
+                'product_sku': product.sku,
+                'quantity': quantity,
+                'unit_price': unit_price,
+                'total_price': quantity * unit_price,
+                'reference': reference,
+                'notes': notes,
+                'created_by': created_by,
+                'remaining_stock': product.quantity,
+                'low_stock_warning': low_stock_warning
+            }
+            
+            # Render template with receipt data
+            return render_template('stock_out.html', 
+                                 product=product, 
+                                 receipt_data=receipt_data,
+                                 show_receipt=True)
+            
         except Exception as e:
             db.session.rollback()
             flash(f'Error updating stock: {str(e)}', 'danger')
     
-    return render_template('stock_out.html', product=product)
+    return render_template('stock_out.html', product=product, show_receipt=False)
 
 @app.route('/transactions')
 @login_required
