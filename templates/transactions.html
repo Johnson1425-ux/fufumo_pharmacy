@@ -21,6 +21,7 @@
                                 <th>Total</th>
                                 <th>Reference</th>
                                 <th>Created By</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -38,6 +39,15 @@
                                 <td>Tsh{{ "%.2f"|format(trans.total_price or 0) }}</td>
                                 <td>{{ trans.reference or '-' }}</td>
                                 <td>{{ trans.created_by or 'System' }}</td>
+                                <td>
+                                    {% if trans.transaction_type == 'out' %}
+                                        <button class="btn btn-sm btn-info" onclick="viewReceipt({{ trans.id }})">
+                                            <i class="bi bi-receipt"></i> Receipt
+                                        </button>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -78,4 +88,226 @@
         </div>
     </div>
 </div>
+
+<!-- Receipt Modal -->
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="receiptModalLabel">
+                    <i class="bi bi-receipt"></i> Sales Receipt
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="receiptContent">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-info" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading receipt...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Close
+                </button>
+                <button type="button" class="btn btn-primary" onclick="printReceipt()">
+                    <i class="bi bi-printer"></i> Print
+                </button>
+                <button type="button" class="btn btn-success" onclick="downloadReceipt()">
+                    <i class="bi bi-download"></i> Download
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentReceiptData = null;
+
+function viewReceipt(transactionId) {
+    // Show the modal
+    var receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
+    receiptModal.show();
+    
+    // Fetch receipt data
+    fetch(`/api/receipt/${transactionId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to load receipt');
+            }
+            return response.json();
+        })
+        .then(data => {
+            currentReceiptData = data;
+            displayReceipt(data);
+        })
+        .catch(error => {
+            document.getElementById('receiptContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> 
+                    Error loading receipt: ${error.message}
+                </div>
+            `;
+        });
+}
+
+function displayReceipt(data) {
+    const receiptHTML = `
+        <div class="receipt-container p-4">
+            <!-- Company Header -->
+            <div class="text-center mb-4">
+                <h3 class="fw-bold">SALES RECEIPT</h3>
+                <p class="text-muted mb-0">Receipt #${data.transaction_id}</p>
+                <p class="text-muted">${data.transaction_date}</p>
+            </div>
+            
+            <hr>
+            
+            <!-- Transaction Details -->
+            <div class="row mb-3">
+                <div class="col-6">
+                    <p class="mb-1"><strong>Served By:</strong></p>
+                    <p>${data.created_by}</p>
+                </div>
+                ${data.reference ? `
+                <div class="col-6 text-end">
+                    <p class="mb-1"><strong>Invoice #:</strong></p>
+                    <p>${data.reference}</p>
+                </div>
+                ` : ''}
+            </div>
+            
+            <hr>
+            
+            <!-- Product Details -->
+            <div class="mb-4">
+                <h5 class="mb-3">Purchase Details</h5>
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Product</th>
+                            <th>Qty</th>
+                            <th>Unit Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>${data.product_name}</td>
+                            <td>${data.quantity}</td>
+                            <td>Tsh${parseFloat(data.unit_price).toFixed(2)}</td>
+                            <td><strong>Tsh${parseFloat(data.total_price).toFixed(2)}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Summary -->
+            <div class="bg-light p-3 rounded mb-3">
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <p class="mb-1"><strong>Total Amount:</strong></p>
+                        <h3 class="text-info mb-0">Tsh${parseFloat(data.total_price).toFixed(2)}</h3>
+                    </div>
+                </div>
+            </div>
+            
+            ${data.notes ? `
+            <div class="mb-3">
+                <p class="mb-1"><strong>Notes:</strong></p>
+                <p class="text-muted">${data.notes}</p>
+            </div>
+            ` : ''}
+            
+            <hr>
+            
+            <div class="text-center text-muted">
+                <small>This is a computer-generated receipt.</small><br>
+                <small>Thank you for your business!</small>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('receiptContent').innerHTML = receiptHTML;
+}
+
+function printReceipt() {
+    if (!currentReceiptData) {
+        alert('No receipt data available');
+        return;
+    }
+    
+    // Get the receipt content
+    var receiptContent = document.getElementById('receiptContent').innerHTML;
+    
+    // Open new window for printing
+    var printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Receipt #${currentReceiptData.transaction_id}</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+            <style>
+                @media print {
+                    .modal-footer { display: none; }
+                    body { padding: 20px; }
+                }
+                body { font-family: Arial, sans-serif; }
+            </style>
+        </head>
+        <body>
+            ${receiptContent}
+            <script>
+                window.onload = function() {
+                    window.print();
+                }
+            <\/script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+
+function downloadReceipt() {
+    if (!currentReceiptData) {
+        alert('No receipt data available');
+        return;
+    }
+    
+    // Get the receipt content
+    var receiptContent = document.getElementById('receiptContent').innerHTML;
+    
+    var htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Receipt #${currentReceiptData.transaction_id}</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+            <style>
+                body { padding: 20px; font-family: Arial, sans-serif; }
+            </style>
+        </head>
+        <body>
+            ${receiptContent}
+        </body>
+        </html>
+    `;
+    
+    // Create a Blob and download it
+    var blob = new Blob([htmlContent], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = `receipt_${currentReceiptData.transaction_id}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+</script>
+
 {% endblock %}
