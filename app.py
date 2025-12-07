@@ -676,6 +676,37 @@ def transactions():
     
     return render_template('transactions.html', transactions=transactions)
 
+@app.route('/api/receipt/<int:transaction_id>')
+@login_required
+def api_receipt(transaction_id):
+    """API endpoint to fetch receipt data for a transaction"""
+    transaction = Transaction.query.get_or_404(transaction_id)
+    
+    # Only allow viewing receipts for 'out' transactions (sales)
+    if transaction.transaction_type != 'out':
+        return jsonify({'error': 'Receipt only available for sales transactions'}), 400
+    
+    # Get product details
+    product = Product.query.get(transaction.product_id)
+    
+    if not product:
+        return jsonify({'error': 'Product not found'}), 404
+    
+    # Prepare receipt data (customer-friendly, no internal stock info)
+    receipt_data = {
+        'transaction_id': transaction.id,
+        'transaction_date': transaction.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        'product_name': product.name,
+        'quantity': transaction.quantity,
+        'unit_price': float(transaction.unit_price or 0),
+        'total_price': float(transaction.total_price or 0),
+        'reference': transaction.reference or '',
+        'notes': transaction.notes or '',
+        'created_by': transaction.created_by or 'Staff'
+    }
+    
+    return jsonify(receipt_data)
+
 @app.route('/suppliers')
 @login_required
 def suppliers():
