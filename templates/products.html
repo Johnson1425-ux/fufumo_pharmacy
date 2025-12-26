@@ -3,26 +3,26 @@
 {% block title %}Products - Inventory Management{% endblock %}
 
 {% block content %}
-<div class="py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Products</h2>
-        <a href="{{ url_for('add_product') }}" class="btn btn-primary">
+<div class="py-3 py-md-4">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 mb-md-4 gap-2">
+        <h2 class="mb-0">Products</h2>
+        <a href="{{ url_for('add_product') }}" class="btn btn-primary btn-sm btn-md-md w-100 w-sm-auto">
             <i class="bi bi-plus-circle"></i> Add Product
         </a>
     </div>
     
     <!-- Search and Filter -->
-    <div class="card mb-4">
-        <div class="card-body">
+    <div class="card mb-3 mb-md-4">
+        <div class="card-body p-3 p-md-4">
             <form method="get" action="{{ url_for('products') }}">
-                <div class="row">
-                    <div class="col-md-6">
-                        <input type="text" name="search" class="form-control" 
-                               placeholder="Search by name, SKU, or description..."
+                <div class="row g-2 g-md-3">
+                    <div class="col-12 col-md-6">
+                        <input type="text" name="search" class="form-control form-control-sm form-control-md-md" 
+                               placeholder="Search by name, SKU..."
                                value="{{ request.args.get('search', '') }}">
                     </div>
-                    <div class="col-md-4">
-                        <select name="category" class="form-select">
+                    <div class="col-7 col-md-4">
+                        <select name="category" class="form-select form-select-sm form-select-md-md">
                             <option value="">All Categories</option>
                             {% for cat in categories %}
                                 <option value="{{ cat }}" {% if request.args.get('category') == cat %}selected{% endif %}>
@@ -31,9 +31,10 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-outline-primary w-100">
-                            <i class="bi bi-search"></i> Search
+                    <div class="col-5 col-md-2">
+                        <button type="submit" class="btn btn-outline-primary btn-sm btn-md-md w-100">
+                            <i class="bi bi-search"></i>
+                            <span class="d-none d-md-inline ms-1">Search</span>
                         </button>
                     </div>
                 </div>
@@ -41,12 +42,12 @@
         </div>
     </div>
     
-    <!-- Products Table -->
-    <div class="card">
+    <!-- Products Table - Desktop View -->
+    <div class="card d-none d-lg-block">
         <div class="card-body">
             {% if products %}
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-hover mb-0">
                         <thead>
                             <tr>
                                 <th>SKU</th>
@@ -122,11 +123,107 @@
             {% endif %}
         </div>
     </div>
+    
+    <!-- Products Cards - Mobile/Tablet View -->
+    <div class="d-lg-none">
+        {% if products %}
+            <div class="row g-2 g-md-3">
+                {% for product in products %}
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body p-3">
+                            <!-- Product Header -->
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="flex-grow-1 me-2">
+                                    <h6 class="mb-1 fw-bold text-truncate">{{ product.name }}</h6>
+                                    <small class="text-muted">SKU: {{ product.sku }}</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    {% if product.quantity <= product.reorder_level %}
+                                        <span class="badge bg-danger">{{ product.quantity }}</span>
+                                    {% elif product.quantity <= product.reorder_level * 2 %}
+                                        <span class="badge bg-warning">{{ product.quantity }}</span>
+                                    {% else %}
+                                        <span class="badge bg-success">{{ product.quantity }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Product Details -->
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Category</small>
+                                    {% if product.category %}
+                                        <span class="badge bg-secondary small">{{ product.category }}</span>
+                                    {% else %}
+                                        <small>-</small>
+                                    {% endif %}
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Location</small>
+                                    <small class="fw-medium">{{ product.location or '-' }}</small>
+                                </div>
+                            </div>
+                            
+                            <div class="row g-2 mb-3">
+                                <div class="col-4">
+                                    <small class="text-muted d-block">Unit Price</small>
+                                    <small class="fw-bold text-success">Tsh{{ "%.0f"|format(product.unit_price) }}</small>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted d-block">Cost</small>
+                                    <small class="fw-medium">Tsh{{ "%.0f"|format(product.cost_price) }}</small>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted d-block">Value</small>
+                                    <small class="fw-bold text-primary">Tsh{{ "%.0f"|format(product.quantity * product.unit_price) }}</small>
+                                </div>
+                            </div>
+                            
+                            {% if product.description %}
+                            <p class="small text-muted mb-3 text-truncate">{{ product.description[:60] }}...</p>
+                            {% endif %}
+                            
+                            <!-- Action Buttons -->
+                            <div class="d-flex gap-1">
+                                <a href="{{ url_for('stock_in', product_id=product.id) }}" 
+                                   class="btn btn-sm btn-outline-success flex-fill" title="Stock In">
+                                    <i class="bi bi-plus"></i> In
+                                </a>
+                                <a href="{{ url_for('stock_out', product_id=product.id) }}" 
+                                   class="btn btn-sm btn-outline-info flex-fill" title="Stock Out">
+                                    <i class="bi bi-dash"></i> Out
+                                </a>
+                                <a href="{{ url_for('edit_product', id=product.id) }}" 
+                                   class="btn btn-sm btn-outline-warning flex-fill" title="Edit">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger flex-fill" 
+                                        onclick="confirmDelete({{ product.id }}, '{{ product.name }}')"
+                                        title="Delete">
+                                    <i class="bi bi-trash"></i> Del
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="card">
+                <div class="card-body">
+                    <p class="text-center text-muted my-5">
+                        No products found. <a href="{{ url_for('add_product') }}">Add your first product</a>
+                    </p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
 </div>
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Confirm Delete</h5>
@@ -137,14 +234,38 @@
                 This action cannot be undone.
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
                 <form id="deleteForm" method="POST" style="display: inline;">
-                    <button type="submit" class="btn btn-danger">Delete</button>
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    /* Mobile-specific styles */
+    @media (max-width: 991.98px) {
+        .card {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+        }
+    }
+    
+    @media (max-width: 575.98px) {
+        .btn-sm {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.4rem;
+        }
+        
+        h6 {
+            font-size: 0.9rem;
+        }
+    }
+</style>
 
 <script>
 function confirmDelete(productId, productName) {
