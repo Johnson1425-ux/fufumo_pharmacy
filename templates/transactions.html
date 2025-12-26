@@ -296,10 +296,24 @@ function displayReceipt(data) {
     const receiptHTML = `
         <div class="receipt-container p-2 p-md-4">
             <!-- Company Header -->
-            <div class="text-center mb-3 mb-md-4">
-                <h3 class="fw-bold">SALES RECEIPT</h3>
-                <p class="text-muted mb-0 small">Receipt #${data.transaction_id}</p>
-                <p class="text-muted small">${data.transaction_date}</p>
+            <div class="mb-3 mb-md-4">
+                <div class="row align-items-center g-2">
+                    <div class="col-auto">
+                        <img src="/static/SMC.png" 
+                             alt="Fufumo Pharmacy Logo" 
+                             class="img-fluid"
+                             style="height: 60px; width: auto; max-height: 80px;"
+                             onerror="this.style.display='none'">
+                    </div>
+                    <div class="col text-center">
+                        <h3 class="fw-bold mb-1 fs-5 fs-md-4">SALES RECEIPT</h3>
+                        <h3 class="fw-bold mb-0 fs-6 fs-md-5">FUFUMO PHARMACY</h3>
+                    </div>
+                </div>
+                <div class="text-center mt-2">
+                    <p class="text-muted mb-0 small">Receipt #${data.transaction_id}</p>
+                    <p class="text-muted small">${data.transaction_date}</p>
+                </div>
             </div>
             
             <hr>
@@ -322,7 +336,7 @@ function displayReceipt(data) {
             
             <!-- Product Details -->
             <div class="mb-3 mb-md-4">
-                <h5 class="mb-2 mb-md-3">Purchase Details</h5>
+                <h5 class="mb-2 mb-md-3 fs-6 fs-md-5">Purchase Details</h5>
                 <div class="table-responsive">
                     <table class="table table-bordered table-sm mb-0">
                         <thead class="table-light">
