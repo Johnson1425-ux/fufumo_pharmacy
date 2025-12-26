@@ -3,106 +3,111 @@
 {% block title %}Dashboard - Inventory Management{% endblock %}
 
 {% block content %}
-<div class="py-4">
-    <h2 class="mb-4">Dashboard</h2>
+<div class="py-3 py-md-4">
+    <h2 class="mb-3 mb-md-4">Dashboard</h2>
     
     <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card stat-card primary">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-2">Total Products</h6>
-                            <h3 class="mb-0">{{ total_products }}</h3>
+    <div class="row mb-3 mb-md-4 g-2 g-md-3">
+        <div class="col-6 col-md-3">
+            <div class="card stat-card primary h-100">
+                <div class="card-body p-3 p-md-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1 me-2">
+                            <h6 class="text-muted mb-1 mb-md-2 small">Total Products</h6>
+                            <h3 class="mb-0 fs-4 fs-md-3">{{ total_products }}</h3>
                         </div>
-                        <i class="bi bi-box text-primary" style="font-size: 2rem;"></i>
+                        <i class="bi bi-box text-primary fs-3 fs-md-1"></i>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="col-md-3">
-            <div class="card stat-card success">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-2">Inventory Value</h6>
-                            <h3 class="mb-0">Tsh{{ "%.2f"|format(total_value) }}</h3>
+        <div class="col-6 col-md-3">
+            <div class="card stat-card success h-100">
+                <div class="card-body p-3 p-md-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1 me-2">
+                            <h6 class="text-muted mb-1 mb-md-2 small">Inventory Value</h6>
+                            <h3 class="mb-0 fs-5 fs-md-3 text-truncate">Tsh{{ "%.2f"|format(total_value) }}</h3>
                         </div>
-                        <i class="bi bi-currency-dollar text-success" style="font-size: 2rem;"></i>
+                        <i class="bi bi-currency-dollar text-success fs-3 fs-md-1 flex-shrink-0"></i>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="col-md-3">
-            <div class="card stat-card warning">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-2">Total Cost</h6>
-                            <h3 class="mb-0">Tsh{{ "%.2f"|format(total_cost) }}</h3>
+        <div class="col-6 col-md-3">
+            <div class="card stat-card warning h-100">
+                <div class="card-body p-3 p-md-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1 me-2">
+                            <h6 class="text-muted mb-1 mb-md-2 small">Total Cost</h6>
+                            <h3 class="mb-0 fs-5 fs-md-3 text-truncate">Tsh{{ "%.2f"|format(total_cost) }}</h3>
                         </div>
-                        <i class="bi bi-cash-stack text-warning" style="font-size: 2rem;"></i>
+                        <i class="bi bi-cash-stack text-warning fs-3 fs-md-1 flex-shrink-0"></i>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="col-md-3">
-            <div class="card stat-card danger">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-2">Low Stock Items</h6>
-                            <h3 class="mb-0">
+        <div class="col-6 col-md-3">
+            <div class="card stat-card danger h-100">
+                <div class="card-body p-3 p-md-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1 me-2">
+                            <h6 class="text-muted mb-1 mb-md-2 small">Low Stock Items</h6>
+                            <h3 class="mb-0 fs-4 fs-md-3">
                                 {{ low_stock_products }}
                                 {% if low_stock_products > 0 %}
-                                    <span class="badge bg-danger alert-badge ms-2">!</span>
+                                    <span class="badge bg-danger alert-badge ms-1 ms-md-2">!</span>
                                 {% endif %}
                             </h3>
                         </div>
-                        <i class="bi bi-exclamation-triangle text-danger" style="font-size: 2rem;"></i>
+                        <i class="bi bi-exclamation-triangle text-danger fs-3 fs-md-1 flex-shrink-0"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="row">
+    <div class="row g-3 g-md-4">
         <!-- Low Stock Alerts -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Low Stock Alerts</h5>
+        <div class="col-12 col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-danger text-white py-2 py-md-3">
+                    <h5 class="mb-0 fs-6 fs-md-5">
+                        <i class="bi bi-exclamation-triangle"></i> Low Stock Alerts
+                    </h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-3 p-md-4">
                     {% if low_stock_items %}
                         <div class="table-responsive">
-                            <table class="table table-sm">
+                            <table class="table table-sm mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Product</th>
-                                        <th>Current Stock</th>
-                                        <th>Reorder Level</th>
-                                        <th>Action</th>
+                                        <th class="small">Product</th>
+                                        <th class="small">Current</th>
+                                        <th class="small d-none d-sm-table-cell">Reorder</th>
+                                        <th class="small">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for item in low_stock_items[:5] %}
                                     <tr>
-                                        <td>{{ item.name }}</td>
+                                        <td class="small text-truncate" style="max-width: 120px;">
+                                            {{ item.name }}
+                                        </td>
                                         <td>
-                                            <span class="badge bg-{{ 'danger' if item.quantity == 0 else 'warning' }}">
+                                            <span class="badge bg-{{ 'danger' if item.quantity == 0 else 'warning' }} small">
                                                 {{ item.quantity }}
                                             </span>
                                         </td>
-                                        <td>{{ item.reorder_level }}</td>
+                                        <td class="small d-none d-sm-table-cell">{{ item.reorder_level }}</td>
                                         <td>
                                             <a href="{{ url_for('stock_in', product_id=item.id) }}" 
                                                class="btn btn-sm btn-success">
-                                                <i class="bi bi-plus-circle"></i> Restock
+                                                <i class="bi bi-plus-circle d-none d-sm-inline"></i>
+                                                <span class="small">Restock</span>
                                             </a>
                                         </td>
                                     </tr>
@@ -111,58 +116,62 @@
                             </table>
                         </div>
                         {% if low_stock_items|length > 5 %}
-                            <div class="text-center mt-2">
-                                <a href="{{ url_for('products') }}?low_stock=true" class="text-muted">
+                            <div class="text-center mt-2 mt-md-3">
+                                <a href="{{ url_for('products') }}?low_stock=true" class="text-muted small">
                                     View all {{ low_stock_items|length }} low stock items
                                 </a>
                             </div>
                         {% endif %}
                     {% else %}
-                        <p class="text-muted text-center my-3">No low stock alerts</p>
+                        <p class="text-muted text-center my-3 small">No low stock alerts</p>
                     {% endif %}
                 </div>
             </div>
         </div>
         
         <!-- Recent Transactions -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Transactions</h5>
+        <div class="col-12 col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white py-2 py-md-3">
+                    <h5 class="mb-0 fs-6 fs-md-5">
+                        <i class="bi bi-clock-history"></i> Recent Transactions
+                    </h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-3 p-md-4">
                     {% if recent_transactions %}
                         <div class="table-responsive">
-                            <table class="table table-sm">
+                            <table class="table table-sm mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Product</th>
-                                        <th>Type</th>
-                                        <th>Quantity</th>
-                                        <th>Date</th>
+                                        <th class="small">Product</th>
+                                        <th class="small">Type</th>
+                                        <th class="small d-none d-md-table-cell">Qty</th>
+                                        <th class="small">Date</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for trans in recent_transactions[:5] %}
                                     <tr>
-                                        <td>{{ trans.product.name }}</td>
+                                        <td class="small text-truncate" style="max-width: 120px;">
+                                            {{ trans.product.name }}
+                                        </td>
                                         <td>
-                                            <span class="badge bg-{{ 'success' if trans.transaction_type == 'in' else 'info' }}">
+                                            <span class="badge bg-{{ 'success' if trans.transaction_type == 'in' else 'info' }} small">
                                                 {{ trans.transaction_type|upper }}
                                             </span>
                                         </td>
-                                        <td>{{ trans.quantity }}</td>
-                                        <td>{{ trans.created_at.strftime('%m/%d %H:%M') }}</td>
+                                        <td class="small d-none d-md-table-cell">{{ trans.quantity }}</td>
+                                        <td class="small">{{ trans.created_at.strftime('%m/%d %H:%M') }}</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
-                        <div class="text-center mt-2">
-                            <a href="{{ url_for('transactions') }}" class="text-muted">View all transactions</a>
+                        <div class="text-center mt-2 mt-md-3">
+                            <a href="{{ url_for('transactions') }}" class="text-muted small">View all transactions</a>
                         </div>
                     {% else %}
-                        <p class="text-muted text-center my-3">No recent transactions</p>
+                        <p class="text-muted text-center my-3 small">No recent transactions</p>
                     {% endif %}
                 </div>
             </div>
@@ -170,25 +179,35 @@
     </div>
     
     <!-- Quick Actions -->
-    <div class="row mt-4">
-        <div class="col-md-12">
+    <div class="row mt-3 mt-md-4">
+        <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h5>
+                <div class="card-header py-2 py-md-3">
+                    <h5 class="mb-0 fs-6 fs-md-5">
+                        <i class="bi bi-lightning"></i> Quick Actions
+                    </h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-3 p-md-4">
                     <div class="d-flex gap-2 flex-wrap">
-                        <a href="{{ url_for('add_product') }}" class="btn btn-primary">
-                            <i class="bi bi-plus-circle"></i> Add New Product
+                        <a href="{{ url_for('add_product') }}" class="btn btn-primary btn-sm btn-md-md">
+                            <i class="bi bi-plus-circle"></i>
+                            <span class="d-none d-sm-inline ms-1">Add New Product</span>
+                            <span class="d-sm-none ms-1">Add Product</span>
                         </a>
-                        <a href="{{ url_for('products') }}" class="btn btn-outline-primary">
-                            <i class="bi bi-box"></i> View All Products
+                        <a href="{{ url_for('products') }}" class="btn btn-outline-primary btn-sm btn-md-md">
+                            <i class="bi bi-box"></i>
+                            <span class="d-none d-sm-inline ms-1">View All Products</span>
+                            <span class="d-sm-none ms-1">Products</span>
                         </a>
-                        <a href="{{ url_for('add_supplier') }}" class="btn btn-outline-success">
-                            <i class="bi bi-truck"></i> Add Supplier
+                        <a href="{{ url_for('add_supplier') }}" class="btn btn-outline-success btn-sm btn-md-md">
+                            <i class="bi bi-truck"></i>
+                            <span class="d-none d-sm-inline ms-1">Add Supplier</span>
+                            <span class="d-sm-none ms-1">Supplier</span>
                         </a>
-                        <a href="{{ url_for('reports') }}" class="btn btn-outline-info">
-                            <i class="bi bi-graph-up"></i> View Reports
+                        <a href="{{ url_for('reports') }}" class="btn btn-outline-info btn-sm btn-md-md">
+                            <i class="bi bi-graph-up"></i>
+                            <span class="d-none d-sm-inline ms-1">View Reports</span>
+                            <span class="d-sm-none ms-1">Reports</span>
                         </a>
                     </div>
                 </div>
@@ -196,4 +215,51 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* Mobile-specific adjustments */
+    @media (max-width: 767.98px) {
+        .stat-card .card-body {
+            min-height: 100px;
+        }
+        
+        .table {
+            font-size: 0.875rem;
+        }
+        
+        .table td, .table th {
+            padding: 0.5rem 0.25rem;
+        }
+        
+        .btn-sm {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+        }
+    }
+    
+    /* Ensure equal height cards in grid */
+    @media (min-width: 768px) {
+        .stat-card {
+            height: 100%;
+        }
+    }
+    
+    /* Truncate text in tables on mobile */
+    .text-truncate {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    @media (max-width: 575.98px) {
+        .text-truncate {
+            max-width: 100px;
+        }
+    }
+</style>
 {% endblock %}
