@@ -7,236 +7,52 @@
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/bootstrap-icons.css') }}" rel="stylesheet">
     <style>
-        body {
-            overflow-x: hidden;
-        }
-        
+        body { overflow-x: hidden; }
         .sidebar {
             min-height: 100vh;
             position: fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
+            top: 0; bottom: 0; left: 0;
             z-index: 1000;
             overflow-y: auto;
             background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
             transition: transform 0.3s ease-in-out;
             width: 250px;
         }
-        
-        /* Hide sidebar on mobile by default */
         @media (max-width: 767.98px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .sidebar.show {
-                transform: translateX(0);
-            }
-            
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.show { transform: translateX(0); }
             .sidebar-overlay {
                 position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
+                top: 0; left: 0; right: 0; bottom: 0;
                 background-color: rgba(0, 0, 0, 0.5);
                 z-index: 999;
                 display: none;
             }
-            
-            .sidebar-overlay.show {
-                display: block;
-            }
+            .sidebar-overlay.show { display: block; }
         }
-        
-        .sidebar .nav-link {
-            color: #ecf0f1;
-            padding: 15px 20px;
-            transition: all 0.3s;
-        }
-        .sidebar .nav-link:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: #fff;
-        }
-        .sidebar .nav-link.active {
-            background-color: rgba(255, 255, 255, 0.2);
-            border-left: 3px solid #3498db;
-        }
-        
-        /* Mobile navbar */
+        .sidebar .nav-link { color: #ecf0f1; padding: 15px 20px; transition: all 0.3s; }
+        .sidebar .nav-link:hover { background-color: rgba(255, 255, 255, 0.1); color: #fff; }
+        .sidebar .nav-link.active { background-color: rgba(255, 255, 255, 0.2); border-left: 3px solid #3498db; }
         .mobile-navbar {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             z-index: 998;
             background: linear-gradient(90deg, #2c3e50 0%, #34495e 100%);
             padding: 12px 16px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        
         @media (max-width: 767.98px) {
-            .mobile-navbar {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-            }
-            
-            .main-content {
-                padding-top: 60px !important;
-            }
+            .mobile-navbar { display: flex; align-items: center; justify-content: space-between; }
+            .main-content { padding-top: 60px !important; }
         }
-        
-        .menu-toggle {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 5px 10px;
-        }
-        
-        .menu-toggle:focus {
-            outline: none;
-        }
-        
-        .main-content {
-            background-color: #f8f9fa;
-            min-height: 100vh;
-            margin-left: 0;
-        }
-        
-        @media (min-width: 768px) {
-            .main-content {
-                margin-left: 250px;
-            }
-        }
-        
-        .card {
-            border: none;
-            box-shadow: 0 0 20px rgba(0,0,0,0.08);
-            transition: transform 0.3s;
-        }
-        
-        .stat-card {
-            border-left: 4px solid;
-        }
-        .stat-card.primary {
-            border-left-color: #3498db;
-        }
-        .stat-card.success {
-            border-left-color: #2ecc71;
-        }
-        .stat-card.warning {
-            border-left-color: #f39c12;
-        }
-        .stat-card.danger {
-            border-left-color: #e74c3c;
-        }
-        .alert-badge {
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 10px rgba(231, 76, 60, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
-            }
-        }
-        
-        .sidebar-footer {
-            padding: 15px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            margin-top: auto;
-        }
+        .menu-toggle { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+        .main-content { background-color: #f8f9fa; min-height: 100vh; margin-left: 0; }
+        @media (min-width: 768px) { .main-content { margin-left: 250px; } }
+        .sidebar-footer { padding: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: auto; }
     </style>
 </head>
 <body>
-<<<<<<< HEAD
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <nav class="col-md-2 d-md-block sidebar p-0">
-                <div class="position-sticky">
-                    <div class="text-center text-white py-4">
-                        <i class="bi bi-box-seam" style="font-size: 2rem;"></i>
-                        <h5 class="mt-2">FUFUMO PHARMACY</h5>
-                    </div>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
-                                <i class="bi bi-speedometer2"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'product' in request.endpoint %}active{% endif %}" href="{{ url_for('products') }}">
-                                <i class="bi bi-box"></i> Products
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'transactions' %}active{% endif %}" href="{{ url_for('transactions') }}">
-                                <i class="bi bi-arrow-left-right"></i> Transactions
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('sales') }}">
-                                <i class="bi bi-graph-up"></i> Sales
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'supplier' in request.endpoint %}active{% endif %}" href="{{ url_for('suppliers') }}">
-                                <i class="bi bi-truck"></i> Suppliers
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'reports' %}active{% endif %}" href="{{ url_for('reports') }}">
-                                <i class="bi bi-graph-up"></i> Reports
-                            </a>
-                        </li>
-                        {% if current_user.is_authenticated and current_user.role == 'admin' %}
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'users' %}active{% endif %}" href="{{ url_for('users') }}">
-                                <i class="bi bi-person-plus"></i> User Management
-                            </a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                    <div class="mt-auto p-3 text-white">
-                        {% if current_user.is_authenticated %}
-                            <small>Logged in as: {{ current_user.username }}</small>
-                            <a href="{{ url_for('logout') }}" class="nav-link text-danger">
-                                <i class="bi bi-box-arrow-right"></i> Logout
-                            </a>
-                        {% endif %}
-                    </div>
-                </div>
-            </nav>
-
-            <main class="col-md-10 ms-sm-auto px-md-4 main-content">
-                <!-- Flash messages -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        <div class="mt-3">
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                                    {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                {% endwith %}
-
-                {% block content %}{% endblock %}
-            </main>
-=======
-    <!-- Mobile Navbar -->
     <div class="mobile-navbar">
         <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
             <i class="bi bi-list"></i>
@@ -244,15 +60,12 @@
         <div class="text-white d-flex align-items-center">
             <i class="bi bi-box-seam me-2"></i>
             <span class="fw-bold">FUFUMO PHARMACY</span>
->>>>>>> 45f671c955a37c5c60be62a66f7911eb16a1cf53
         </div>
-        <div style="width: 40px;"></div> <!-- Spacer for centering -->
+        <div style="width: 40px;"></div>
     </div>
     
-    <!-- Sidebar Overlay for Mobile -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     
-    <!-- Sidebar -->
     <nav class="sidebar" id="sidebar">
         <div class="d-flex flex-column h-100">
             <div class="text-center text-white py-4">
@@ -308,7 +121,6 @@
     </nav>
 
     <main class="main-content px-3 px-md-4">
-        <!-- Flash messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="mt-3">
@@ -326,13 +138,10 @@
     </main>
 
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/chart.min.js') }}"></script>
     <script>
-        // Sidebar toggle functionality
         const menuToggle = document.getElementById('menuToggle');
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
-        const sidebarLinks = document.querySelectorAll('.sidebar .nav-link');
         
         function toggleSidebar() {
             sidebar.classList.toggle('show');
@@ -344,30 +153,11 @@
             sidebarOverlay.classList.remove('show');
         }
         
-        // Toggle sidebar when menu button is clicked
-        if (menuToggle) {
-            menuToggle.addEventListener('click', toggleSidebar);
-        }
+        if (menuToggle) menuToggle.addEventListener('click', toggleSidebar);
+        if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
         
-        // Close sidebar when overlay is clicked
-        if (sidebarOverlay) {
-            sidebarOverlay.addEventListener('click', closeSidebar);
-        }
-        
-        // Close sidebar when a link is clicked on mobile
-        sidebarLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                if (window.innerWidth < 768) {
-                    closeSidebar();
-                }
-            });
-        });
-        
-        // Close sidebar when window is resized to desktop
         window.addEventListener('resize', () => {
-            if (window.innerWidth >= 768) {
-                closeSidebar();
-            }
+            if (window.innerWidth >= 768) closeSidebar();
         });
     </script>
     {% block scripts %}{% endblock %}
