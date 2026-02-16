@@ -5,6 +5,28 @@
 {% block content %}
 <div class="py-4">
     <h2 class="mb-4">Transaction History</h2>
+
+    <!-- Search and Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="{{ url_for('transactions') }}">
+                <div class="d-flex gap-3 align-items-center justify-content-between">
+                    <input type="text" name="search" class="form-control" style="max-width: 800px;" 
+                        placeholder="Search by product name..."
+                        value="{{ request.args.get('search', '') }}"
+                    >
+                    <select name="transaction_type" class="form-select" style="max-width: 200px;">
+                        <option value="">All Types</option>
+                        <option value="IN" {% if transaction_type == 'IN' %}selected{% endif %}>IN</option>
+                        <option value="OUT" {% if transaction_type== 'OUT' %}selected{% endif %}>OUT</option>
+                    </select>
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
     
     <div class="card">
         <div class="card-body">

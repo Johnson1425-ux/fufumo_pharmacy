@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Sales Report - Inventory Management{% endblock %}
+
+{% block content %}
+<style>
+.table-responsive {
+    overflow: visible !important;
+}
+</style>
+
+<div class="py-4">
+    <h2 class="mb-4">Sales Report</h2>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Total Revenue</h6>
+                    <h3 class="mb-0">Tsh{{ "%.2f"|format(totals.total_revenue or 0) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Total Units Sold</h6>
+                    <h3 class="mb-0">{{ totals.total_quantity or 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Total Transactions</h6>
+                    <h3 class="mb-0">{{ totals.total_transactions or 0 }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="{{ url_for('sales') }}">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <input type="text" name="search" class="form-control" 
+                            placeholder="Search by product name..."
+                            value="{{ search or '' }}">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="date" name="date_from" class="form-control" 
+                            placeholder="From date"
+                            value="{{ date_from or '' }}">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="date" name="date_to" class="form-control" 
+                            placeholder="To date"
+                            value="{{ date_to or '' }}">
+                    </div>
+                    <div class="col-md-2">
+                        <select name="sort_by" class="form-select">
+                            <option value="total_sales" {% if sort_by == 'total_sales' %}selected{% endif %}>Most Sales</option>
+                            <option value="quantity" {% if sort_by == 'quantity' %}selected{% endif %}>Most Quantity</option>
+                            <option value="revenue" {% if sort_by == 'revenue' %}selected{% endif %}>Highest Revenue</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            {% if sales_data.items %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>SKU</th>
+                                <th>Total Sales</th>
+                                <th>Units Sold</th>
+                                <th>Total Revenue</th>
+                                <th>Avg Price</th>
+                                <th>First Sale</th>
+                                <th>Last Sale</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sale in sales_data.items %}
+                            <tr>
+                                <td><strong>{{ sale.name }}</strong></td>
+                                <td>{{ sale.sku }}</td>
+                                <td><span class="badge bg-info">{{ sale.total_sales }}</span></td>
+                                <td>{{ sale.total_quantity }}</td>
+                                <td><strong>Tsh{{ "%.2f"|format(sale.total_revenue) }}</strong></td>
+                                <td>Tsh{{ "%.2f"|format(sale.total_revenue / sale.total_quantity) }}</td>
+                                <td>{{ sale.first_sale.strftime('%Y-%m-%d') if sale.first_sale else '-' }}</td>
+                                <td>{{ sale.last_sale.strftime('%Y-%m-%d') if sale.last_sale else '-' }}</td>
+                                <td>
+                                    <a href="{{ url_for('sales_detail', product_id=sale.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> View Details
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if sales_data.pages > 1 %}
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if sales_data.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ sales_data.prev_num }}&search={{ search or '' }}&date_from={{ date_from or '' }}&date_to={{ date_to or '' }}&sort_by={{ sort_by or '' }}">Previous</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page in sales_data.iter_pages() %}
+                            {% if page %}
+                                <li class="page-item {% if page == sales_data.page %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ page }}&search={{ search or '' }}&date_from={{ date_from or '' }}&date_to={{ date_to or '' }}&sort_by={{ sort_by or '' }}">{{ page }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if sales_data.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ sales_data.next_num }}&search={{ search or '' }}&date_from={{ date_from or '' }}&date_to={{ date_to or '' }}&sort_by={{ sort_by or '' }}">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <p class="text-center text-muted my-5">No sales data found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

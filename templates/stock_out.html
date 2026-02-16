@@ -82,10 +82,20 @@
                 {% if receipt_data %}
                 <div class="receipt-container p-4">
                     <!-- Company Header -->
-                    <div class="text-center mb-4">
-                        <h3 class="fw-bold">SALES RECEIPT</h3>
-                        <p class="text-muted mb-0">Receipt #{{ receipt_data.transaction_id }}</p>
-                        <p class="text-muted">{{ receipt_data.transaction_date }}</p>
+                    <div class="mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <img src="{{ url_for('static', filename='logo.png') }}" alt="Fufumo Pharmacy Logo" style="height: 80px; width: auto;">
+                            </div>
+                            <div class="col text-center">
+                                <h3 class="fw-bold mb-1">SALES RECEIPT</h3>
+                                <h3 class="fw-bold mb-0">FUFUMO PHARMACY</h3>
+                            </div>
+                        </div>
+                        <div class="text-center mt-2">
+                            <p class="text-muted mb-0">Receipt #{{ receipt_data.transaction_id }}</p>
+                            <p class="text-muted">{{ receipt_data.transaction_date }}</p>
+                        </div>
                     </div>
                     
                     <hr>

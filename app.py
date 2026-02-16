@@ -5,9 +5,12 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import func
 from extensions import db, login_manager, bcrypt
 from models import User, Product, Transaction, Supplier
+from functools import wraps
 import os
 import pandas as pd
+from datetime import datetime, timedelta, timezone
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 import random
 import string
 
@@ -667,14 +670,27 @@ def stock_out(product_id):
 @app.route('/transactions')
 @login_required
 def transactions():
+    search = request.args.get('search', '').strip()
+    transaction_type = request.args.get('transaction_type', '').strip()
     page = request.args.get('page', 1, type=int)
     per_page = 20
+
+    query = Transaction.query
+
+    if search:
+        search_filter = f'%{search}%'
+        query = query.join(Transaction.product).filter(
+            Product.name.ilike(search_filter)
+        )
+
+    if transaction_type:
+        query = query.filter(Transaction.transaction_type.ilike(transaction_type))
     
-    transactions = Transaction.query.order_by(Transaction.created_at.desc()).paginate(
+    transactions = query.order_by(Transaction.created_at.desc()).paginate(
         page=page, per_page=per_page, error_out=False
     )
     
-    return render_template('transactions.html', transactions=transactions)
+    return render_template('transactions.html', transactions=transactions, search=search, transaction_type=transaction_type)
 
 @app.route('/api/receipt/<int:transaction_id>')
 @login_required
@@ -736,6 +752,134 @@ def add_supplier():
             flash(f'Error adding supplier: {str(e)}', 'error')
     
     return render_template('add_supplier.html')
+
+@app.route('/sales')
+@login_required
+def sales():
+    search = request.args.get('search', '').strip()
+    date_from = request.args.get('date_from', '').strip()
+    date_to = request.args.get('date_to', '').strip()
+    sort_by = request.args.get('sort_by', 'total_sales')  # total_sales, quantity, revenue
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    
+    # Base query - get all OUT transactions grouped by product
+    query = db.session.query(
+        Product.id,
+        Product.name,
+        Product.sku,
+        db.func.sum(Transaction.quantity).label('total_quantity'),
+        db.func.sum(Transaction.total_price).label('total_revenue'),
+        db.func.count(Transaction.id).label('total_sales'),
+        db.func.min(Transaction.created_at).label('first_sale'),
+        db.func.max(Transaction.created_at).label('last_sale')
+    ).join(
+        Transaction, Product.id == Transaction.product_id
+    ).filter(
+        Transaction.transaction_type == 'out'
+    ).group_by(
+        Product.id, Product.name, Product.sku
+    )
+    
+    # Search filter
+    if search:
+        search_filter = f'%{search}%'
+        query = query.filter(Product.name.ilike(search_filter))
+    
+    # Date range filter
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
+            query = query.filter(Transaction.created_at >= date_from_obj)
+        except ValueError:
+            pass
+    
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d')
+            # Add one day to include the entire end date
+            date_to_obj = date_to_obj + timedelta(days=1)
+            query = query.filter(Transaction.created_at < date_to_obj)
+        except ValueError:
+            pass
+    
+    # Sorting
+    if sort_by == 'quantity':
+        query = query.order_by(db.desc('total_quantity'))
+    elif sort_by == 'revenue':
+        query = query.order_by(db.desc('total_revenue'))
+    else:  # total_sales
+        query = query.order_by(db.desc('total_sales'))
+    
+    # Pagination
+    sales_data = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    # Calculate totals for summary
+    totals = db.session.query(
+        db.func.sum(Transaction.quantity).label('total_quantity'),
+        db.func.sum(Transaction.total_price).label('total_revenue'),
+        db.func.count(Transaction.id).label('total_transactions')
+    ).filter(
+        Transaction.transaction_type == 'out'
+    )
+    
+    # Apply same filters to totals
+    if search:
+        totals = totals.join(Product).filter(Product.name.ilike(search_filter))
+    if date_from:
+        try:
+            totals = totals.filter(Transaction.created_at >= datetime.strptime(date_from, '%Y-%m-%d'))
+        except ValueError:
+            pass
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1)
+            totals = totals.filter(Transaction.created_at < date_to_obj)
+        except ValueError:
+            pass
+    
+    totals_result = totals.first()
+    
+    return render_template('sales.html', 
+                         sales_data=sales_data, 
+                         search=search,
+                         date_from=date_from,
+                         date_to=date_to,
+                         sort_by=sort_by,
+                         totals=totals_result)
+
+@app.route('/sales/<int:product_id>')
+@login_required
+def sales_detail(product_id):
+    product = Product.query.get_or_404(product_id)
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    
+    # Get all sales transactions for this product
+    transactions = Transaction.query.filter_by(
+        product_id=product_id,
+        transaction_type='out'
+    ).order_by(Transaction.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    # Calculate summary statistics
+    stats = db.session.query(
+        db.func.sum(Transaction.quantity).label('total_quantity'),
+        db.func.sum(Transaction.total_price).label('total_revenue'),
+        db.func.count(Transaction.id).label('total_sales'),
+        db.func.avg(Transaction.unit_price).label('avg_price'),
+        db.func.min(Transaction.created_at).label('first_sale'),
+        db.func.max(Transaction.created_at).label('last_sale')
+    ).filter_by(
+        product_id=product_id,
+        transaction_type='out'
+    ).first()
+    
+    return render_template('sales_detail.html', 
+                         product=product, 
+                         transactions=transactions,
+                         stats=stats)
 
 @app.route('/reports')
 @login_required
@@ -823,6 +967,125 @@ def api_low_stock():
         'quantity': p.quantity,
         'reorder_level': p.reorder_level
     } for p in products])
+
+# Admin decorator - checks if role is 'admin'
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('login'))
+        if current_user.role != 'admin':
+            flash('You do not have permission to access this page.', 'danger')
+            return redirect(url_for('dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# User Management Page
+@app.route('/users')
+@login_required
+@admin_required
+def users():
+    search = request.args.get('search', '').strip()
+    role_filter = request.args.get('role', '').strip()
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    
+    query = User.query
+    
+    if search:
+        search_filter = f'%{search}%'
+        query = query.filter(
+            db.or_(
+                User.username.ilike(search_filter),
+                User.email.ilike(search_filter)
+            )
+        )
+    
+    if role_filter:
+        query = query.filter(User.role == role_filter)
+    
+    users = query.order_by(User.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    return render_template('users.html', users=users, search=search, role_filter=role_filter)
+
+# Change User Role
+@app.route('/users/<int:user_id>/change-role', methods=['POST'])
+@login_required
+@admin_required
+def change_user_role(user_id):
+    user = User.query.get_or_404(user_id)
+    
+    if user.id == current_user.id:
+        return jsonify({
+            'success': False,
+            'message': 'You cannot change your own role'
+        }), 400
+    
+    data = request.get_json()
+    new_role = data.get('role')
+    
+    if new_role not in ['admin', 'user']:
+        return jsonify({
+            'success': False,
+            'message': 'Invalid role'
+        }), 400
+    
+    user.role = new_role
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': f'User {user.username} role changed to {new_role}',
+        'role': user.role
+    })
+
+# Delete User
+@app.route('/users/<int:user_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_user(user_id):
+    user = User.query.get_or_404(user_id)
+    
+    if user.id == current_user.id:
+        return jsonify({
+            'success': False,
+            'message': 'You cannot delete your own account'
+        }), 400
+    
+    username = user.username
+    db.session.delete(user)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': f'User {username} has been deleted successfully'
+    })
+
+# Reset User Password
+@app.route('/users/<int:user_id>/reset-password', methods=['POST'])
+@login_required
+@admin_required
+def reset_user_password(user_id):
+    user = User.query.get_or_404(user_id)
+    data = request.get_json()
+    new_password = data.get('password')
+    
+    if not new_password or len(new_password) < 6:
+        return jsonify({
+            'success': False,
+            'message': 'Password must be at least 6 characters long'
+        }), 400
+    
+    user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')  # Use bcrypt instead
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': f'Password for {user.username} has been reset successfully'
+    })
 
 if __name__ == '__main__':
     with app.app_context():

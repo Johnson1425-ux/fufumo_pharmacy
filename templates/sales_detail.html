@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Sales Details - {{ product.name }} - Inventory Management{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">Sales Details: {{ product.name }}</h2>
+            <p class="text-muted">SKU: {{ product.sku }}</p>
+        </div>
+        <a href="{{ url_for('sales') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Sales Report
+        </a>
+    </div>
+
+    <!-- Product Stats Summary -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Sales</h6>
+                    <h3 class="mb-0">{{ stats.total_sales or 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Units Sold</h6>
+                    <h3 class="mb-0">{{ stats.total_quantity or 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Revenue</h6>
+                    <h3 class="mb-0">Tsh{{ "%.2f"|format(stats.total_revenue or 0) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Average Price</h6>
+                    <h3 class="mb-0">Tsh{{ "%.2f"|format(stats.avg_price or 0) }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">First Sale</h6>
+                    <p class="mb-0">{{ stats.first_sale.strftime('%Y-%m-%d %H:%M') if stats.first_sale else 'No sales yet' }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Last Sale</h6>
+                    <p class="mb-0">{{ stats.last_sale.strftime('%Y-%m-%d %H:%M') if stats.last_sale else 'No sales yet' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Transactions Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Sales Transactions</h5>
+        </div>
+        <div class="card-body">
+            {% if transactions.items %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Reference</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Total</th>
+                                <th>Sold By</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trans in transactions.items %}
+                            <tr>
+                                <td>{{ trans.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>{{ trans.reference or '-' }}</td>
+                                <td>{{ trans.quantity }}</td>
+                                <td>Tsh{{ "%.2f"|format(trans.unit_price) }}</td>
+                                <td><strong>Tsh{{ "%.2f"|format(trans.total_price) }}</strong></td>
+                                <td>{{ trans.created_by or 'System' }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-info" onclick="viewReceipt({{ trans.id }})">
+                                        <i class="bi bi-receipt"></i> Receipt
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if transactions.pages > 1 %}
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if transactions.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ transactions.prev_num }}">Previous</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page in transactions.iter_pages() %}
+                            {% if page %}
+                                <li class="page-item {% if page == transactions.page %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ page }}">{{ page }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if transactions.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ transactions.next_num }}">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <p class="text-center text-muted my-5">No sales transactions found for this product.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function viewReceipt(transactionId) {
+    // Redirect to transactions page or open receipt modal
+    window.location.href = `/transactions?transaction_id=${transactionId}`;
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - Inventory Management{% endblock %}
+
+{% block content %}
+<style>
+.table-responsive {
+    overflow: visible !important;
+}
+</style>
+
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">User Management</h2>
+        <a href="{{ url_for('register') }}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Register New User
+        </a>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="{{ url_for('users') }}">
+                <div class="d-flex gap-3 align-items-center">
+                    <input type="text" name="search" class="form-control" style="max-width: 400px;" 
+                        placeholder="Search by username or email..."
+                        value="{{ search or '' }}">
+                    
+                    <select name="role" class="form-select" style="max-width: 200px;">
+                        <option value="">All Roles</option>
+                        <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Admin</option>
+                        <option value="user" {% if role_filter == 'user' %}selected{% endif %}>User</option>
+                    </select>
+                    
+                    <button type="submit" class="btn btn-outline-primary ms-auto">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            {% if users.items %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Created</th>
+                                <th>Last Login</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users.items %}
+                            <tr id="user-row-{{ user.id }}">
+                                <td>{{ user.id }}</td>
+                                <td>
+                                    <strong>{{ user.username }}</strong>
+                                    {% if user.id == current_user.id %}
+                                        <span class="badge bg-info ms-1">You</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ user.email if user.email else '-' }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'danger' if user.role == 'admin' else 'secondary' }}" id="role-badge-{{ user.id }}">
+                                        {{ user.role|upper }}
+                                    </span>
+                                </td>
+                                <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else '-' }}</td>
+                                <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Never' }}</td>
+                                <td>
+                                    {% if user.id != current_user.id %}
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-light" type="button" id="dropdownMenuButton{{ user.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ user.id }}">
+                                                <li>
+                                                    <a class="dropdown-item" href="#" onclick="showChangeRoleModal({{ user.id }}, '{{ user.username }}', '{{ user.role }}'); return false;">
+                                                        <i class="bi bi-person-badge text-warning"></i> Change Role
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="#" onclick="showResetPasswordModal({{ user.id }}, '{{ user.username }}'); return false;">
+                                                        <i class="bi bi-key text-info"></i> Reset Password
+                                                    </a>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <a class="dropdown-item text-danger" href="#" onclick="showDeleteConfirmModal({{ user.id }}, '{{ user.username }}'); return false;">
+                                                        <i class="bi bi-trash"></i> Delete User
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if users.pages > 1 %}
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if users.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ users.prev_num }}&search={{ search or '' }}&role={{ role_filter or '' }}">Previous</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page in users.iter_pages() %}
+                            {% if page %}
+                                <li class="page-item {% if page == users.page %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ page }}&search={{ search or '' }}&role={{ role_filter or '' }}">{{ page }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if users.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ users.next_num }}&search={{ search or '' }}&role={{ role_filter or '' }}">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <p class="text-center text-muted my-5">No users found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Change Role Modal -->
+<div class="modal fade" id="changeRoleModal" tabindex="-1" aria-labelledby="changeRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changeRoleModalLabel">
+                    <i class="bi bi-person-badge"></i> Change User Role
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Change role for user: <strong id="role-username"></strong></p>
+                <input type="hidden" id="role-user-id">
+                <div class="mb-3">
+                    <label for="new-role" class="form-label">New Role</label>
+                    <select class="form-select" id="new-role">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="changeRole()">Change Role</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetPasswordModalLabel">
+                    <i class="bi bi-key"></i> Reset Password
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Reset password for user: <strong id="reset-username"></strong></p>
+                <input type="hidden" id="reset-user-id">
+                <div class="mb-3">
+                    <label for="new-password" class="form-label">New Password</label>
+                    <input type="password" class="form-control" id="new-password" 
+                           placeholder="Enter new password (min 6 characters)" minlength="6">
+                </div>
+                <div class="mb-3">
+                    <label for="confirm-password" class="form-label">Confirm Password</label>
+                    <input type="password" class="form-control" id="confirm-password" 
+                           placeholder="Confirm new password">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="resetPassword()">Reset Password</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteConfirmModalLabel">
+                    <i class="bi bi-exclamation-triangle"></i> Confirm Delete
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="delete-user-id">
+                <div class="text-center py-3">
+                    <i class="bi bi-exclamation-circle text-danger" style="font-size: 4rem;"></i>
+                    <h5 class="mt-3">Are you sure?</h5>
+                    <p class="text-muted">
+                        You are about to delete user: <strong id="delete-username"></strong>
+                    </p>
+                    <div class="alert alert-danger">
+                        <i class="bi bi-info-circle"></i> This action cannot be undone!
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteUser()">
+                    <i class="bi bi-trash"></i> Yes, Delete User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showChangeRoleModal(userId, username, currentRole) {
+    document.getElementById('role-user-id').value = userId;
+    document.getElementById('role-username').textContent = username;
+    document.getElementById('new-role').value = currentRole;
+    
+    var modal = new bootstrap.Modal(document.getElementById('changeRoleModal'));
+    modal.show();
+}
+
+function changeRole() {
+    const userId = document.getElementById('role-user-id').value;
+    const newRole = document.getElementById('new-role').value;
+    
+    fetch(`/users/${userId}/change-role`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ role: newRole })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update role badge
+            const badge = document.getElementById(`role-badge-${userId}`);
+            badge.className = `badge bg-${data.role === 'admin' ? 'danger' : 'secondary'}`;
+            badge.textContent = data.role.toUpperCase();
+            
+            alert(data.message);
+            var modal = bootstrap.Modal.getInstance(document.getElementById('changeRoleModal'));
+            modal.hide();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while changing user role');
+    });
+}
+
+function showResetPasswordModal(userId, username) {
+    document.getElementById('reset-user-id').value = userId;
+    document.getElementById('reset-username').textContent = username;
+    document.getElementById('new-password').value = '';
+    document.getElementById('confirm-password').value = '';
+    
+    var modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+    modal.show();
+}
+
+function resetPassword() {
+    const userId = document.getElementById('reset-user-id').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+    
+    if (newPassword.length < 6) {
+        alert('Password must be at least 6 characters long');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        alert('Passwords do not match');
+        return;
+    }
+    
+    fetch(`/users/${userId}/reset-password`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password: newPassword })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            var modal = bootstrap.Modal.getInstance(document.getElementById('resetPasswordModal'));
+            modal.hide();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while resetting password');
+    });
+}
+
+function showDeleteConfirmModal(userId, username) {
+    document.getElementById('delete-user-id').value = userId;
+    document.getElementById('delete-username').textContent = username;
+    
+    var modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+    modal.show();
+}
+
+function confirmDeleteUser() {
+    const userId = document.getElementById('delete-user-id').value;
+    
+    fetch(`/users/${userId}/delete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close the modal
+            var modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal'));
+            modal.hide();
+            
+            // Remove the row from table
+            document.getElementById(`user-row-${userId}`).remove();
+            alert(data.message);
+            
+            // Reload if no more users on page
+            const tbody = document.querySelector('tbody');
+            if (tbody.children.length === 0) {
+                location.reload();
+            }
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while deleting user');
+    });
+}
+</script>
+
+{% endblock %}
