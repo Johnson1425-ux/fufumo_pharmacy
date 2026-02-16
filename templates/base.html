@@ -94,6 +94,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('sales') }}">
+                        <i class="bi bi-graph-up"></i> Sales
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link {% if request.endpoint == 'reports' %}active{% endif %}" href="{{ url_for('reports') }}">
                         <i class="bi bi-graph-up"></i> Reports
                     </a>
